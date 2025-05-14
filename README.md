@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/gdcc-mcp-dataverse-badge.png)](https://mseep.ai/app/gdcc-mcp-dataverse)
+
 # MCP (Model Context Protocol) server for Dataverse
 
 Credits: this work is funded by [SSHOC-NL](https://sshoc.nl) project developing [Semantic Croissant](https://docs.google.com/document/d/1fi9Lb6x5Wm0L9CZftqjSGElV_ifcSW_IT-H8ZlpbrtQ/edit?tab=t.0). First version of [Croissant ML](https://docs.mlcommons.org/croissant/docs/croissant-spec.html) export for Dataverse was implemented by Phil Durbin (Harvard IQSS) and Slava Tykhonov (DANS-KNAW).
