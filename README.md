@@ -56,7 +56,7 @@ To register the MCP server in Visual Studio Code ([official docs](https://code.v
     "servers": {
       "mcp-dataverse": {
         "type": "sse",
-        "url": "https://mcp.dataverse.org/sse"
+        "url": "https://mcp.dataverse.org/tools"
       }
     }
   }
