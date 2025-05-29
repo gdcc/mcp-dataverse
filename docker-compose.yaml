@@ -7,10 +7,11 @@ services:
     env_file:
       - .env
     ports:
-      - "8100:8000"
+      - ${PORT}:8000
     environment:
       - PYTHONUNBUFFERED=1
       - "DATAVERSES"
+      - "INTROPAGE"
       - MCP_BASE_URL=http://localhost:8000/mcp
       - "CACHEDIR"
       - "KAGGLE_USERNAME"
