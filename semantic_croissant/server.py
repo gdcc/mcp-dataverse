@@ -4,6 +4,7 @@ import logging
 import sys
 from typing import Optional
 import urllib
+import os
 import time
 from urllib.error import HTTPError
 import asyncio
