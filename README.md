@@ -69,6 +69,22 @@ Next, click "view", then "open chat". Choose "Agent" in the dropdown that offers
 Your new MCP server should be configured for use but you can check if it are enabled by clicking the "select tools" icon (just below the chat input area) and scrolling down (here you can also try the "add more tools" button).
 </details>
 
+<details><summary>Windsurf</summary>
+
+As explained in the [Windsurf docs](https://docs.windsurf.com/windsurf/cascade/mcp), configure
+`~/.codeium/windsurf/mcp_config.json` with the following.
+
+```
+{
+  "mcpServers": {
+    "mcp-dataverse": {
+      "serverUrl": "https://mcp.dataverse.org/sse"
+    }
+  }
+}
+```
+</details>
+
 ### Chat examples
 
 Here are some suggested examples to use when chatting with the MCP server.
