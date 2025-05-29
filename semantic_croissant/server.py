@@ -26,6 +26,8 @@ import requests
 #from mcp.schema import TextContent
 #from utils.MultiMedia import MultiMedia
 import pydoi
+from fastapi.responses import HTMLResponse
+import markdown
 
 from utils.dataframe import CroissantRecipe
 ####################################################################################
@@ -278,6 +280,10 @@ def main(port: int, transport: str) -> int:
                     streams[0], streams[1], app.create_initialization_options()
                 )
 
+        async def run_home(request: Request):
+            readme = requests.get("https://raw.githubusercontent.com/gdcc/mcp-dataverse/refs/heads/main/README.md")
+            return HTMLResponse(content=markdown.markdown(readme.text))
+
         async def get_tools(request: Request):
             tools = await list_tools()
             # Convert tools to a serializable format
@@ -452,6 +458,7 @@ def main(port: int, transport: str) -> int:
             routes=[
                 Route("/sse", endpoint=handle_sse),
                 Mount("/messages/", app=sse.handle_post_message),
+                Route("/", endpoint=run_home, methods=["GET", "POST"]),
                 Route("/tools", endpoint=get_tools, methods=["GET", "POST"]),
                 Route("/status", endpoint=get_status),
                 Route("/tools/get_croissant_record", endpoint=run_get_croissant_record, methods=["GET", "POST"]),

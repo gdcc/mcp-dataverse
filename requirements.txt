@@ -1,4 +1,5 @@
 fastapi
+markdown
 uv
 pydoi
 ollama
@@ -10,7 +11,7 @@ pandas
 fastapi-mcp
 fastexcel
 croissant-rdf
-polars
+polars-lts-cpu
 torch
 yt-dlp
 git+https://github.com/Dans-labs/pyDataverse@development#egg=pyDataverse
