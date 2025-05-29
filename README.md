@@ -43,6 +43,8 @@ Create a configuration file for Cursor at [~/.cursor/mcp.json](https://docs.curs
 ```
 </details>
 
+Ensure that "auto" is selected as the agent.
+
 <details><summary>Visual Studio Code</summary>
 
 To register the MCP server in Visual Studio Code ([official docs](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)), open settings and search for "mcp". Click the link "edit in settings.json" under "Model Context Protocol server configurations" and paste the "mcp-dataverse" object below, which is shown in a simplified version of that configuration file.
