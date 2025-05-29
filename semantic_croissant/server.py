@@ -189,6 +189,16 @@ def main(port: int, transport: str) -> int:
                 },
             ),
             types.Tool(
+                name="onboarding",
+                endpoint="/onboarding",
+                description="Get the onboarding instruction for LLM to act independently from model vendor",
+                inputSchema={
+                    "type": "object",
+                    "required": [],
+                    "properties": {},
+                },
+            ),
+            types.Tool(
                 name="get_croissant_record",
                 endpoint="/get_croissant_record",
                 description="Convert a dataset to Croissant ML format with get_croissant_record tool and explore the dataset with DOI or handle.",
@@ -281,7 +291,7 @@ def main(port: int, transport: str) -> int:
                 )
 
         async def run_home(request: Request):
-            readme = requests.get("https://raw.githubusercontent.com/gdcc/mcp-dataverse/refs/heads/main/README.md")
+            readme = requests.get(os.environ['INTROPAGE'])
             return HTMLResponse(content=markdown.markdown(readme.text))
 
         async def get_tools(request: Request):
@@ -452,6 +462,9 @@ def main(port: int, transport: str) -> int:
             files = data.json()['data']
             return JSONResponse(content={"files": files})
 
+        async def run_onboarding(request: Request):
+            onboarding = open(os.environ['ONBOARDING'], 'r').read()
+            return Response(content=onboarding, media_type="text/plain" )
 
         starlette_app = Starlette(
             debug=True,
@@ -459,6 +472,7 @@ def main(port: int, transport: str) -> int:
                 Route("/sse", endpoint=handle_sse),
                 Mount("/messages/", app=sse.handle_post_message),
                 Route("/", endpoint=run_home, methods=["GET", "POST"]),
+                Route("/onboarding", endpoint=run_onboarding, methods=["GET", "POST"]),
                 Route("/tools", endpoint=get_tools, methods=["GET", "POST"]),
                 Route("/status", endpoint=get_status),
                 Route("/tools/get_croissant_record", endpoint=run_get_croissant_record, methods=["GET", "POST"]),
