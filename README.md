@@ -1,6 +1,6 @@
 # MCP (Model Context Protocol) server for Dataverse
 
-Credits: this work is initially funded by the [SSHOC-NL](https://sshoc.nl) project developing [Semantic Croissant](https://docs.google.com/document/d/1fi9Lb6x5Wm0L9CZftqjSGElV_ifcSW_IT-H8ZlpbrtQ/edit?tab=t.0). The first version of [Croissant](https://docs.mlcommons.org/croissant/docs/croissant-spec.html) export for Dataverse was implemented by Philip Durbin (Harvard IQSS) and Slava Tykhonov, Harvard Dataverse Ambassador. Starting from August 2025, further development of Dataverse MCP server is funded by [CODATA](https://codata.org).
+Credits: this work is initially funded by the [SSHOC-NL](https://sshoc.nl) project developing [Semantic Croissant](https://docs.google.com/document/d/1fi9Lb6x5Wm0L9CZftqjSGElV_ifcSW_IT-H8ZlpbrtQ/edit?tab=t.0). The first version of [Croissant](https://docs.mlcommons.org/croissant/docs/croissant-spec.html) export for Dataverse was implemented by [Philip Durbin](https://www.linkedin.com/in/pdurbin/) (Harvard IQSS) and [Slava Tykhonov](https://www.linkedin.com/in/vyacheslavtikhonov/), CODATA AI lead and Harvard Dataverse Ambassador. Starting from August 2025, further development of Dataverse MCP server is funded by [CODATA](https://codata.org).
 
 Croissant is a special language for machines, built on top of Schema.org. With Croissant, we aim to solve multilingual challenges and finally speak the same language across the planet.
 Even if it's artificial.
