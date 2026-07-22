@@ -1,4 +1,5 @@
 from datetime import datetime
+import contextlib
 import json
 import logging
 import sys
@@ -266,8 +267,48 @@ def main(port: int, transport: str) -> int:
         from starlette.applications import Starlette
         from starlette.routing import Mount
         from starlette.routing import Route
+        from starlette.middleware import Middleware
+        from starlette.types import ASGIApp, Scope, Receive, Send
+
+        class StripCharsetMiddleware:
+            def __init__(self, app: ASGIApp) -> None:
+                self.app = app
+
+            async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+                if scope["type"] != "http":
+                    return await self.app(scope, receive, send)
+
+                async def send_wrapper(message: dict) -> None:
+                    if message["type"] == "http.response.start":
+                        headers = message.get("headers", [])
+                        for i, (key, value) in enumerate(headers):
+                            if key.lower() == b"content-type" and b"text/event-stream" in value:
+                                headers[i] = (key, b"text/event-stream")
+                    await send(message)
+
+                await self.app(scope, receive, send_wrapper)
 
         sse = SseServerTransport("/messages/")
+
+        from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
+
+        session_manager = StreamableHTTPSessionManager(app=app, json_response=True)
+
+        class StreamableHTTPASGIApp:
+            """Wraps the session manager as a raw ASGI app so Starlette's Route
+            treats it as a passthrough instead of a `func(request) -> response`
+            handler, avoiding trailing-slash redirects on exact-path matches."""
+
+            async def __call__(self, scope, receive, send):
+                await session_manager.handle_request(scope, receive, send)
+
+        handle_streamable_http = StreamableHTTPASGIApp()
+
+        @contextlib.asynccontextmanager
+        async def lifespan(starlette_app):
+            async with session_manager.run():
+                logger.info("StreamableHTTP session manager started")
+                yield
 
         async def handle_sse(request):
             async with sse.connect_sse(
@@ -276,6 +317,7 @@ def main(port: int, transport: str) -> int:
                 await app.run(
                     streams[0], streams[1], app.create_initialization_options()
                 )
+            return Response()
 
         async def get_tools(request: Request):
             tools = await list_tools()
@@ -448,7 +490,10 @@ def main(port: int, transport: str) -> int:
 
         starlette_app = Starlette(
             debug=True,
+            middleware=[Middleware(StripCharsetMiddleware)],
+            lifespan=lifespan,
             routes=[
+                Route("/", endpoint=handle_sse),
                 Route("/sse", endpoint=handle_sse),
                 Mount("/messages/", app=sse.handle_post_message),
                 Route("/tools", endpoint=get_tools, methods=["GET", "POST"]),
@@ -464,8 +509,8 @@ def main(port: int, transport: str) -> int:
                 Route("/croissant/dspace", endpoint=run_get_croissant_record, methods=["GET", "POST"]),
                 Route("/croissant", endpoint=run_get_croissant_record, methods=["GET", "POST"]),
                 Route("/datatool", endpoint=run_datatool, methods=["GET", "POST"]),
-                Route("/mcp", endpoint=get_mcp, methods=["GET", "POST"]),
                 Route("/mcp/list_tools", endpoint=get_mcp, methods=["GET", "POST"]),
+                Route("/mcp", endpoint=handle_streamable_http, methods=["GET", "POST", "DELETE"]),
                 Route("/get_croissant_record", endpoint=mcp_croissant_record_endpoint, methods=["GET", "POST"]),
                 Route("/fetch", endpoint=run_fetch_website, methods=["GET", "POST"]),
                 Route("/overview", endpoint=run_get_overview, methods=["GET", "POST"]),
@@ -479,7 +524,8 @@ def main(port: int, transport: str) -> int:
         async def startup():
             logger.info("Server is ready to handle requests")
 
-        starlette_app.add_event_handler("startup", startup)
+        # In modern Starlette, pass on_startup to constructor or use lifespan.
+        # Alternatively, we can just omit this since it's just logging.
 
         import uvicorn
 
