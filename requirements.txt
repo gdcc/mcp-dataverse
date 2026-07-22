@@ -10,7 +10,7 @@ pandas
 fastapi-mcp
 fastexcel
 croissant-rdf
-polars
+polars[rtcompat]
 torch
 yt-dlp
 git+https://github.com/Dans-labs/pyDataverse@development#egg=pyDataverse
