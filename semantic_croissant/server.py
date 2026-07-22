@@ -2,6 +2,7 @@ from datetime import datetime
 import contextlib
 import json
 import logging
+import os
 import sys
 from typing import Optional
 import urllib
@@ -117,6 +118,35 @@ def datatool(input: dict) -> list[types.TextContent | types.ImageContent | types
     logger.info(serializable_columns)
     return serializable_columns
 
+def get_dataverse_overview() -> dict:
+    url = os.environ.get("DATAVERSES")
+    if not url:
+        return {"error": "DATAVERSES environment variable is not configured on the server."}
+    data = requests.get(url)
+    installations = data.json()["installations"]
+    return {"installations": installations}
+
+def search_dataverse_datasets(host: str, query: Optional[str] = None) -> dict:
+    if query:
+        query_param = f"q={query}"
+    else:
+        query_param = "q=%2A"
+
+    if "http" not in host:
+        host = f"https://{host}"
+    url = f"{host}/api/search?{query_param}&type=dataset"
+    data = requests.get(url)
+    datasets = data.json()["data"]
+    return {"datasets": datasets}
+
+def search_dataverse_files(host: str) -> dict:
+    if "http" not in host:
+        host = f"https://{host}"
+    url = f"{host}/api/search?q=*&type=file&per_page=0"
+    data = requests.get(url)
+    files = data.json()["data"]
+    return {"files": files}
+
 
 @click.command()
 @click.option("--port", default=8000, help="Port to listen on for SSE")
@@ -129,44 +159,41 @@ def datatool(input: dict) -> list[types.TextContent | types.ImageContent | types
 def main(port: int, transport: str) -> int:
     app = Server("semantic-croissant")
 
-    @app.call_tool()
-    async def fetch_tool(
-        name: str, arguments: dict
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-        if name != "fetch":
+    async def get_croissant_record_endpoint(name: str, arguments: dict):
+        if name != "get_croissant_record":
             raise ValueError(f"Unknown tool: {name}")
-        if "url" not in arguments:
-            raise ValueError("Missing required argument 'url'")
-        return await fetch_website(arguments["url"])
+        record = convert_dataset_to_croissant_ml(arguments["doi"])
+        return record
 
     @app.call_tool()
-    async def get_croissant_record(
+    async def call_tool_dispatcher(
         name: str, arguments: dict
     ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
         logger.info(f"Tool name received: {name}")
-        if name != "get_croissant_record":
+        if name == "fetch":
+            if "url" not in arguments:
+                raise ValueError("Missing required argument 'url'")
+            return await fetch_website(arguments["url"])
+        elif name == "get_croissant_record":
+            return await get_croissant_record_endpoint(name, arguments)
+        elif name == "datatool":
+            return datatool(arguments)
+        elif name == "overview":
+            return get_dataverse_overview()
+        elif name == "overview_datasets":
+            if "host" not in arguments:
+                raise ValueError("Missing required argument 'host'")
+            return search_dataverse_datasets(arguments["host"])
+        elif name == "overview_files":
+            if "host" not in arguments:
+                raise ValueError("Missing required argument 'host'")
+            return search_dataverse_files(arguments["host"])
+        elif name == "search_datasets":
+            if "host" not in arguments:
+                raise ValueError("Missing required argument 'host'")
+            return search_dataverse_datasets(arguments["host"], arguments.get("query"))
+        else:
             raise ValueError(f"Unknown tool: {name}")
-        return convert_dataset_to_croissant_ml(arguments["doi"])
-
-    @app.call_tool()
-    async def datatool(
-        name: str, input: dict
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-        if name != "datatool":
-            raise ValueError(f"Unknown tool: {name}")
-        return await datatool(input)
-
-    @app.call_tool()
-    async def get_croissant_record_endpoint(
-        name: str, arguments: dict
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-        if name != "get_croissant_record":
-            raise ValueError(f"Unknown tool: {name}")
-        #await asyncio.sleep(0.1)
-        record = convert_dataset_to_croissant_ml(arguments["doi"]) #await get_croissant_record("get_croissant_record", {"doi": arguments["doi"]})
-        return record
-        #serializable_record = serialize_data(record)
-        #return types.TextContent(type="text", text=json.dumps(serializable_record, indent=4))
 
     @app.list_tools()
     async def list_tools() -> list[types.Tool]:
@@ -436,11 +463,8 @@ def main(port: int, transport: str) -> int:
             return Response(content=result, media_type="text/html")
 
         async def run_get_overview(request: Request):
-            url = os.environ.get("DATAVERSES")
-            data = requests.get(url)
-            installations = data.json()['installations']
-            return JSONResponse(content={"installations": installations})
-            
+            return JSONResponse(content=get_dataverse_overview())
+
         async def run_get_overview_datasets(request: Request):
             if request.method == "GET":
                 host = request.query_params.get("host")
@@ -448,7 +472,7 @@ def main(port: int, transport: str) -> int:
                 body = await request.json()
                 host = body.get("host")
 
-            return search_datasets(host, False)
+            return JSONResponse(content=search_dataverse_datasets(host))
 
         async def run_search_datasets(request: Request):
             if request.method == "GET":
@@ -458,20 +482,7 @@ def main(port: int, transport: str) -> int:
                 body = await request.json()
                 host = body.get("host")
                 query = body.get("query")
-            return search_datasets(host, query)
-
-        def search_datasets(host: str, query: str):
-            if query:
-                query = f"q={query}"
-            else:
-                query = "q=%2A"
-
-            if not 'http' in host:
-                host = f"https://{host}"
-            url = f"{host}/api/search?{query}&type=dataset"
-            data = requests.get(url)
-            datasets = data.json()['data']
-            return JSONResponse(content={"datasets": datasets})
+            return JSONResponse(content=search_dataverse_datasets(host, query))
 
         async def run_get_overview_files(request: Request):
             if request.method == "GET":
@@ -480,12 +491,7 @@ def main(port: int, transport: str) -> int:
                 body = await request.json()
                 host = body.get("host")
 
-            if not 'http' in host:
-                host = f"https://{host}"
-            url = f"{host}/api/search?q=*&type=file&per_page=0"
-            data = requests.get(url)
-            files = data.json()['data']
-            return JSONResponse(content={"files": files})
+            return JSONResponse(content=search_dataverse_files(host))
 
 
         starlette_app = Starlette(
