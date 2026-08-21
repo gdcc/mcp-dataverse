@@ -9,7 +9,7 @@ Even if it's artificial.
 
 When getting started, we recommend the public MCP server for Dataverse at <https://mcp.dataverse.org>. (Below you'll also find instructions on how to run the MCP server locally.) You can visit https://mcp.dataverse.org/tools for an inventory of available tools.
 
-You will need an MCP client with AI agent support such as [Cursor](https://www.cursor.com), [Visual Studio Code](https://code.visualstudio.com), [Claude Desktop](https://claude.ai/download), [Windsurf Editor](https://windsurf.com), or [Zed](https://zed.dev).
+You will need an MCP client with AI agent support such as [Cursor](https://www.cursor.com), [Visual Studio Code](https://code.visualstudio.com), [Claude Desktop](https://claude.ai/download), [Windsurf Editor](https://windsurf.com), [Zed](https://zed.dev), or [Codex CLI](https://learn.chatgpt.com/docs/codex/cli).
 
 ### (Optional) Command line test
 
@@ -125,6 +125,27 @@ As explained in the [Zed docs](https://zed.dev/docs/ai/mcp), add the following t
 ```
 
 </details>
+
+<details><summary>Codex CLI</summary>
+
+Codex supports MCP servers through `codex mcp add`, and its configuration lives in `~/.codex/config.toml` (Mac/Linux) or `C:\Users\<username>\.codex\config.toml` (Windows) by default.
+
+Run the following command to add the MCP server for Dataverse:
+
+```
+codex mcp add mcp-dataverse --url https://mcp.dataverse.org/sse
+```
+
+You can verify that the server was added by running:
+
+```
+codex mcp list
+```
+
+It should show `mcp-dataverse` in the list of configured MCP servers under 'Name' column.
+
+</details>
+
 
 ### Chat examples
 
